@@ -54,9 +54,9 @@ int main(int argc, char *argv[])
 
 		interface = recv_from_any_link(buf, &len);
 		DIE(interface < 0, "recv_from_any_links");
-
+		
 		struct ether_header *eth_hdr = (struct ether_header *)buf;
-
+		printf("interfata recv=%d, ethertype=%x\n", interface, ntohs(eth_hdr->ether_type));
 		/* Note that packets received are in network order,
 		any header field which has more than 1 byte will need to be conerted to
 		host order. For example, ntohs(eth_hdr->ether_type). The oposite is needed when
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
 
 			// descrease ttl and recompute checksum
 			ip_hdr->ttl--;
-			ip_hdr->check = checksum((uint16_t *)ip_hdr, sizeof(struct iphdr));
+			ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, sizeof(struct iphdr)));
 
 			// rescrie mac
 			uint8_t *router_mac = malloc(6);
@@ -122,33 +122,40 @@ int main(int argc, char *argv[])
 			for (int i = 0; i < 6; i++)
 			{
 				eth_hdr->ether_shost[i] = router_mac[i];
-				// printf("%d ", router_mac[i]);
+				printf("%x ", router_mac[i]);
 			}
-			// printf("\n");
+			printf("\n");
 
 			struct arp_entry *arptable = malloc(sizeof(struct arp_entry) * 100);
 			int arptable_size = parse_arp_table("arp_table.txt", arptable);
+
 			for (int i = 0; i < arptable_size; i++)
 			{
 				if ((arptable[i]).ip == entry->next_hop)
 				{
 					for (int j = 0; j < 6; j++)
 					{
-						// printf("%d ", (arptable[i]).mac[j]);
+						printf("%x ", (arptable[i]).mac[j]);
 						eth_hdr->ether_dhost[j] = (arptable[i]).mac[j];
 					}
-					// printf("\n");
+					printf("\n");
 					break;
 				}
 			}
 			
 			// printf("hdrsize=%ld ipsize=%ld totalip=%d payloadip=%ld\n", sizeof(struct ether_header), sizeof(struct iphdr),
 			// 			ip_hdr->tot_len, ip_hdr->tot_len - sizeof(struct iphdr));
-			// char package[MAX_PACKET_LEN];
-			strncpy(buf, (char *)eth_hdr, sizeof(struct ether_header));
-			strncpy(buf + sizeof(struct ether_header), (char *)ip_hdr, sizeof(struct iphdr));
+			char package[MAX_PACKET_LEN];
+			memcpy(package, eth_hdr, sizeof(struct ether_header));
+			memcpy(package + sizeof(struct ether_header), ip_hdr, len - sizeof(struct ether_header));
+
+			// strncpy(buf, (char *)eth_hdr, sizeof(struct ether_header));
+			// strncpy(buf + sizeof(struct ether_header), (char *)ip_hdr, sizeof(struct iphdr));
 			// strncat(package, buf + sizeof(struct ether_header) + sizeof(struct iphdr), ip_hdr->tot_len - sizeof(struct iphdr));
-			printf("len=%ld\n", len);
+			// printf("len=%ld\n", len);
+
+			// eth_hdr = (struct ether_header *)package;
+			// printf("ethertype=%x + send\n", ntohs(eth_hdr->ether_type));
 			int res = send_to_link(entry->interface, buf, len);
 		}
 	}
