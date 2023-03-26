@@ -57,11 +57,12 @@ struct route_table_entry * trie_find(struct trie *t, uint32_t ip_addr)
     int curr_bit_idx = 31;
     while (curr_bit_idx) {
         int curr_bit = (ip_addr >> curr_bit_idx) & 1;
-
-        if(curr_node->child[curr_bit] == NULL)
-            break;
-
+        printf("%d\n", curr_bit);
         curr_node = curr_node->child[curr_bit];
+        
+        if(curr_node == NULL)
+            return NULL;
+            
         if(curr_node->entry != NULL)
             entry = curr_node->entry;
 

@@ -38,6 +38,37 @@ struct trie *create_rtable_trie(char *rtable_path)
 	return t;
 }
 
+void send_icmp_message(struct ether_header *eth_hdr, struct iphdr *ip_hdr, int type, int code, int interface)
+{
+	for (int i = 0; i < 6; i++)
+	{
+		uint8_t aux = eth_hdr->ether_dhost[i];
+		eth_hdr->ether_dhost[i] = eth_hdr->ether_shost[i];
+		eth_hdr->ether_shost[i] = aux;
+	}
+
+	uint32_t aux = ip_hdr->saddr;
+	ip_hdr->saddr = ip_hdr->daddr;
+	ip_hdr->daddr = aux;
+	ip_hdr->protocol = 1;
+	ip_hdr->tot_len = htons(sizeof(struct iphdr) + sizeof(struct icmphdr));
+	ip_hdr->check = 0;
+	ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, sizeof(struct iphdr)));
+
+	struct icmphdr *icmp_hdr = malloc(sizeof(struct icmphdr));
+	icmp_hdr->type = type;
+	icmp_hdr->code = code;
+	icmp_hdr->checksum = 0;
+	icmp_hdr->checksum = htons(checksum((uint16_t *)icmp_hdr, sizeof(struct icmphdr)));
+
+	char package[MAX_PACKET_LEN];
+	memcpy(package, eth_hdr, sizeof(struct ether_header));
+	memcpy(package + sizeof(struct ether_header), ip_hdr, sizeof(struct iphdr));
+	memcpy(package + sizeof(struct ether_header) + sizeof(struct iphdr), icmp_hdr, sizeof(struct icmphdr));
+
+	send_to_link(interface, package, sizeof(struct ether_header) + sizeof(struct iphdr) + sizeof(struct icmphdr));
+}
+
 int main(int argc, char *argv[])
 {
 	char buf[MAX_PACKET_LEN];
@@ -81,6 +112,7 @@ int main(int argc, char *argv[])
 			if (!strcmp(dotted_ip_addr_dest, interface_ip))
 			{
 				printf("destinatia e chiar routerul\n");
+				send_icmp_message(eth_hdr, ip_hdr, 0, 0, interface);
 				continue;
 			}
 
@@ -98,21 +130,23 @@ int main(int argc, char *argv[])
 			if (ip_hdr->ttl == 0 || ip_hdr->ttl == 1)
 			{
 				printf("ttl expirat\n");
+				send_icmp_message(eth_hdr, ip_hdr, 11, 0, interface);
 				continue;
 			}
 
 			// find entry corresponding to next hop
 			struct route_table_entry *entry = trie_find(t, ntohl(ip_hdr->daddr));
-			printf("id=%s prefix=%s mask=%s hop=%s interf=%d\n",
-				   get_dotted_ip_addr(ntohl(ip_hdr->daddr)),
-				   get_dotted_ip_addr(ntohl(entry->prefix)),
-				   get_dotted_ip_addr(ntohl(entry->mask)),
-				   get_dotted_ip_addr(ntohl(entry->next_hop)),
-				   entry->interface);
+			// printf("id=%s prefix=%s mask=%s hop=%s interf=%d\n",
+			// 	   get_dotted_ip_addr(ntohl(ip_hdr->daddr)),
+			// 	   get_dotted_ip_addr(ntohl(entry->prefix)),
+			// 	   get_dotted_ip_addr(ntohl(entry->mask)),
+			// 	   get_dotted_ip_addr(ntohl(entry->next_hop)),
+			// 	   entry->interface);
 
 			if (entry == NULL)
 			{
-				printf("nu are destinatar");
+				printf("nu are destinatar\n");
+				send_icmp_message(eth_hdr, ip_hdr, 3, 0, interface);
 				continue;
 			}
 
@@ -121,7 +155,7 @@ int main(int argc, char *argv[])
 			ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, sizeof(struct iphdr)));
 
 			// rescrie mac
-			
+
 			for (int i = 0; i < 6; i++)
 			{
 				eth_hdr->ether_shost[i] = interface_mac[i];
@@ -150,7 +184,7 @@ int main(int argc, char *argv[])
 			memcpy(package, eth_hdr, sizeof(struct ether_header));
 			memcpy(package + sizeof(struct ether_header), ip_hdr, len - sizeof(struct ether_header));
 
-			int res = send_to_link(entry->interface, buf, len);
+			send_to_link(entry->interface, package, len);
 		}
 
 		// else if (ntohs(eth_hdr->ether_type) == ARP)
@@ -164,21 +198,19 @@ int main(int argc, char *argv[])
 		// 		printf("arp dest=%s my ip=%s\n", dotted_ip_addr_dest, interface_ip);
 		// 		if(!strcmp(dotted_ip_addr_dest, interface_ip)) {
 		// 			printf("eu sunt destinatia\n");
-					
+
 		// 			for (int i = 0; i < 6; i++) {
 		// 				eth_hdr->ether_dhost[i] = eth_hdr->ether_shost[i];
 		// 				arp_hdr->tha[i] = eth_hdr->ether_shost[i];
 		// 			}
-						
 
 		// 			for (int i = 0; i < 6; i++) {
 		// 				eth_hdr->ether_shost[i] = interface_mac[i];
 		// 				arp_hdr->sha[i] = eth_hdr->ether_shost[i];
 		// 			}
-						
 
 		// 			arp_hdr->op = htons(ARP_REP);
-					
+
 		// 			uint32_t aux = arp_hdr->tpa;
 		// 			arp_hdr->tpa = arp_hdr->spa;
 		// 			arp_hdr->spa = aux;
@@ -191,7 +223,7 @@ int main(int argc, char *argv[])
 		// 		}
 		// 		else {
 		// 			printf("nu eu sunt destinatia\n");
-		// 		}				
+		// 		}
 		// 	}
 		// 	else {
 		// 		printf("e arp reply\n");
