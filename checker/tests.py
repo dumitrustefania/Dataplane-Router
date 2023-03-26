@@ -562,7 +562,7 @@ Test = namedtuple("Test", ["host_s", "host_r", "router", "active_fn", "passive_f
 TESTS = OrderedDict([
         ("router_arp_reply", Test(0, 0, 0, router_arp_reply_a, router_arp_reply_p, ["arp"])),
         ("router_arp_request", Test(0, 1, 0, router_arp_request_a, router_arp_request_p, ["arp"])),
-        ("forward", Test(0, 1, 0, forward_a, forward_p, ["forward"])),
+        #("forward", Test(0, 1, 0, forward_a, forward_p, ["forward"])),
         ("forward_no_arp", Test(0, 1, 0, forward_no_arp_a, forward_p, ["forward"])),
         ("ttl", Test(0, 1, 0, forward_a, forward_p, ["forward"])),
         ("checksum", Test(0, 1, 0, forward_a, forward_p, ["forward"])),

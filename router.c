@@ -7,6 +7,8 @@
 
 #define IPv4 0x0800
 #define ARP 0x0806
+#define ARP_REQ 1
+#define ARP_REP 2
 
 char *get_dotted_ip_addr(uint32_t ip_addr)
 {
@@ -18,7 +20,7 @@ char *get_dotted_ip_addr(uint32_t ip_addr)
 	bytes[2] = (ip_addr >> 8) & 0xFF;
 	bytes[3] = ip_addr & 0xFF;
 
-	sprintf(dotted_ip_addr, "%d.%d.%d.%d\n", bytes[0], bytes[1], bytes[2], bytes[3]);
+	sprintf(dotted_ip_addr, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
 	return dotted_ip_addr;
 }
 
@@ -48,13 +50,12 @@ int main(int argc, char *argv[])
 
 	while (1)
 	{
-
 		int interface;
 		size_t len;
 
 		interface = recv_from_any_link(buf, &len);
 		DIE(interface < 0, "recv_from_any_links");
-		
+
 		struct ether_header *eth_hdr = (struct ether_header *)buf;
 		printf("interfata recv=%d, ethertype=%x\n", interface, ntohs(eth_hdr->ether_type));
 		/* Note that packets received are in network order,
@@ -62,12 +63,15 @@ int main(int argc, char *argv[])
 		host order. For example, ntohs(eth_hdr->ether_type). The oposite is needed when
 		sending a packet on the link, */
 
+		// ip ul de pe interfara routerului unde s a primit pachetul
+		char *interface_ip = get_interface_ip(interface);
+		// macul de pe interfata routerului unde s a primit pachetul
+		uint8_t *interface_mac = malloc(6);
+		get_interface_mac(interface, interface_mac);
+
 		if (ntohs(eth_hdr->ether_type) == IPv4)
 		{
 			struct iphdr *ip_hdr = (struct iphdr *)(buf + sizeof(struct ether_header));
-
-			// ip ul de pe interfara routerului unde s a primit pachetul
-			char *interface_ip = get_interface_ip(interface);
 
 			// transformam ip dest din nr pe 32 de biti in format dotted
 			char *dotted_ip_addr_dest = get_dotted_ip_addr(ntohl(ip_hdr->daddr));
@@ -87,14 +91,14 @@ int main(int argc, char *argv[])
 			if (check != checksum((uint16_t *)ip_hdr, sizeof(struct iphdr)))
 			{
 				printf("suma e gresita!\n");
-				break;
+				continue;
 			}
 
 			// verific ttl
 			if (ip_hdr->ttl == 0 || ip_hdr->ttl == 1)
 			{
 				printf("ttl expirat\n");
-				break;
+				continue;
 			}
 
 			// find entry corresponding to next hop
@@ -109,7 +113,7 @@ int main(int argc, char *argv[])
 			if (entry == NULL)
 			{
 				printf("nu are destinatar");
-				break;
+				continue;
 			}
 
 			// descrease ttl and recompute checksum
@@ -117,12 +121,11 @@ int main(int argc, char *argv[])
 			ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, sizeof(struct iphdr)));
 
 			// rescrie mac
-			uint8_t *router_mac = malloc(6);
-			get_interface_mac(interface, router_mac);
+			
 			for (int i = 0; i < 6; i++)
 			{
-				eth_hdr->ether_shost[i] = router_mac[i];
-				printf("%x ", router_mac[i]);
+				eth_hdr->ether_shost[i] = interface_mac[i];
+				printf("%x ", interface_mac[i]);
 			}
 			printf("\n");
 
@@ -142,21 +145,57 @@ int main(int argc, char *argv[])
 					break;
 				}
 			}
-			
-			// printf("hdrsize=%ld ipsize=%ld totalip=%d payloadip=%ld\n", sizeof(struct ether_header), sizeof(struct iphdr),
-			// 			ip_hdr->tot_len, ip_hdr->tot_len - sizeof(struct iphdr));
+
 			char package[MAX_PACKET_LEN];
 			memcpy(package, eth_hdr, sizeof(struct ether_header));
 			memcpy(package + sizeof(struct ether_header), ip_hdr, len - sizeof(struct ether_header));
 
-			// strncpy(buf, (char *)eth_hdr, sizeof(struct ether_header));
-			// strncpy(buf + sizeof(struct ether_header), (char *)ip_hdr, sizeof(struct iphdr));
-			// strncat(package, buf + sizeof(struct ether_header) + sizeof(struct iphdr), ip_hdr->tot_len - sizeof(struct iphdr));
-			// printf("len=%ld\n", len);
-
-			// eth_hdr = (struct ether_header *)package;
-			// printf("ethertype=%x + send\n", ntohs(eth_hdr->ether_type));
 			int res = send_to_link(entry->interface, buf, len);
 		}
+
+		// else if (ntohs(eth_hdr->ether_type) == ARP)
+		// {
+		// 	struct arp_header *arp_hdr = (struct arp_header *)(buf + sizeof(struct ether_header));
+
+		// 	if (ntohs(arp_hdr->op) == ARP_REQ)
+		// 	{	printf("e arp request\n");
+
+		// 		char *dotted_ip_addr_dest = get_dotted_ip_addr(ntohl(arp_hdr->tpa));
+		// 		printf("arp dest=%s my ip=%s\n", dotted_ip_addr_dest, interface_ip);
+		// 		if(!strcmp(dotted_ip_addr_dest, interface_ip)) {
+		// 			printf("eu sunt destinatia\n");
+					
+		// 			for (int i = 0; i < 6; i++) {
+		// 				eth_hdr->ether_dhost[i] = eth_hdr->ether_shost[i];
+		// 				arp_hdr->tha[i] = eth_hdr->ether_shost[i];
+		// 			}
+						
+
+		// 			for (int i = 0; i < 6; i++) {
+		// 				eth_hdr->ether_shost[i] = interface_mac[i];
+		// 				arp_hdr->sha[i] = eth_hdr->ether_shost[i];
+		// 			}
+						
+
+		// 			arp_hdr->op = htons(ARP_REP);
+					
+		// 			uint32_t aux = arp_hdr->tpa;
+		// 			arp_hdr->tpa = arp_hdr->spa;
+		// 			arp_hdr->spa = aux;
+
+		// 			char package[MAX_PACKET_LEN];
+		// 			memcpy(package, eth_hdr, sizeof(struct ether_header));
+		// 			memcpy(package + sizeof(struct ether_header), arp_hdr, len - sizeof(struct ether_header));
+
+		// 			int res = send_to_link(interface, buf, len);
+		// 		}
+		// 		else {
+		// 			printf("nu eu sunt destinatia\n");
+		// 		}				
+		// 	}
+		// 	else {
+		// 		printf("e arp reply\n");
+		// 	}
+		// }
 	}
 }
