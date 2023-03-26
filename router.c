@@ -89,11 +89,7 @@ int main(int argc, char *argv[])
 
 		struct ether_header *eth_hdr = (struct ether_header *)buf;
 		printf("interfata recv=%d, ethertype=%x\n", interface, ntohs(eth_hdr->ether_type));
-		/* Note that packets received are in network order,
-		any header field which has more than 1 byte will need to be conerted to
-		host order. For example, ntohs(eth_hdr->ether_type). The oposite is needed when
-		sending a packet on the link, */
-
+		
 		// ip ul de pe interfara routerului unde s a primit pachetul
 		char *interface_ip = get_interface_ip(interface);
 		// macul de pe interfata routerului unde s a primit pachetul
