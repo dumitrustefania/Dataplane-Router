@@ -105,7 +105,7 @@ void send_arp(uint8_t *mac_src, uint8_t *mac_dst, uint32_t ip_src, uint32_t ip_d
 	arp_hdr->spa = ip_src;
 	arp_hdr->tpa = ip_dst;
 
-	printf("Acest ARP va fi trimis cu IP_SRC %s, IP_DST %s, MAC_SRC ", get_dotted_ip_addr(ip_src), get_dotted_ip_addr(ip_dst));
+	printf("Acest ARP va fi trimis pe interfata %d cu IP_SRC %s, IP_DST %s, MAC_SRC ", interface, get_dotted_ip_addr(ip_src), get_dotted_ip_addr(ip_dst));
 	print_mac(mac_src);
 	printf("si MAC_DST");
 	print_mac(mac_dst);
@@ -233,6 +233,13 @@ int main(int argc, char *argv[])
 				for (int i = 0; i < MAC_SIZE; i++)
 					broadcast[i] = 0xff;
 
+				// ip ul de pe interfara routerului unde se trimite
+				interface_ip = get_interface_ip(rtable_entry->interface);
+				// macul de pe interfata routerului unde se trimite
+				get_interface_mac(rtable_entry->interface, interface_mac);
+				printf("IP interfata noua = %s, MAC interfata noua = ", interface_ip);
+				print_mac(interface_mac);
+
 				send_arp(interface_mac, broadcast, htonl(get_int_ip_addr(interface_ip)),
 						 rtable_entry->next_hop, rtable_entry->interface, ARP_REQ);
 				continue;
@@ -256,10 +263,8 @@ int main(int argc, char *argv[])
 			else if (ntohs(arp_hdr->op) == ARP_REP)
 			{					
 				printf("reply cu IP_SRC %s, IP_DST %s\n", get_dotted_ip_addr(arp_hdr->spa), get_dotted_ip_addr(arp_hdr->tpa));
-				// if (ntohl(arp_hdr->tpa) != get_int_ip_addr(interface_ip)) {
-				// 	printf("HOPA! Nu eu sunt destinatia\n");
-				// 	continue;
-				// }
+				printf("cunosc si MAC_SRC si MAC_DST:");
+				print_mac(arp_hdr->sha);print_mac(arp_hdr->tha);
 				arptable[arptable_size].ip = arp_hdr->spa;
 				memcpy(arptable[arptable_size].mac, arp_hdr->sha, MAC_SIZE);
 				arptable_size++;
@@ -299,3 +304,4 @@ int main(int argc, char *argv[])
 		}
 	}
 }
+

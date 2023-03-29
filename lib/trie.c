@@ -70,19 +70,3 @@ struct route_table_entry * trie_find(struct trie *t, uint32_t ip_addr)
 
     return entry;
 }
-
-// void free_node(struct node *n) {
-//     if(n->child[0] != NULL)
-//         free_node(n->child[0]);
-
-//     if(n->child[0] != NULL)
-//         free_node(n->child[0]);
-
-//     if(n->child[0] != NULL)
-//         free_node(n->child[0]);
-// }
-
-// void trie_free(struct trie *t) {
-//     free_node(t->head);
-//     free(t);
-// }
