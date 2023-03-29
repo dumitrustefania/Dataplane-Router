@@ -1,0 +1,565 @@
+Setting up interface: rr-0-1
+Setting up interface: r-0
+Setting up interface: r-1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet ARP request cu IP_SRC 2.0.168.192, IP_DST 1.0.168.192
+Trimit ARP de tip 2 (req=1, rep=2)
+Acest ARP va fi trimis cu IP_SRC 1.0.168.192, IP_DST 2.0.168.192, MAC_SRC de:fe:c8:ed:0:0:
+si MAC_DSTde:ad:be:ef:0:0:
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Nu am gasit MAC in arptable pt IP 192.168.1.2
+Am bagat in coada pachetul curent cu id 256
+Trimit ARP de tip 1 (req=1, rep=2)
+Acest ARP va fi trimis cu IP_SRC 1.0.168.192, IP_DST 2.1.168.192, MAC_SRC de:fe:c8:ed:0:0:
+si MAC_DSTff:ff:ff:ff:ff:ff:
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet ARP reply cu IP_SRC 2.1.168.192, IP_DST 1.0.168.192
+Am adaugat in ARP table intrarea, acum arata asa:
+2.1.168.192 - de:ad:be:ef:0:1:
+Am scos din coada pachetul de tip 8, cu id 256. El astepta ca next hop IP-ul 2.1.168.192
+Acum sursa si destinatia mac a pachetului sunt:de:fe:c8:ed:0:0:
+de:ad:be:ef:0:1:
+Acum trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet ARP request cu IP_SRC 2.1.168.192, IP_DST 1.1.168.192
+Trimit ARP de tip 2 (req=1, rep=2)
+Acest ARP va fi trimis cu IP_SRC 1.1.168.192, IP_DST 2.1.168.192, MAC_SRC de:fe:c8:ed:0:1:
+si MAC_DSTde:ad:be:ef:0:1:
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 31685
+Nu am gasit MAC in arptable pt IP 192.168.0.2
+Am bagat in coada pachetul curent cu id 31685
+Trimit ARP de tip 1 (req=1, rep=2)
+Acest ARP va fi trimis cu IP_SRC 1.1.168.192, IP_DST 2.0.168.192, MAC_SRC de:fe:c8:ed:0:1:
+si MAC_DSTff:ff:ff:ff:ff:ff:
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet ARP reply cu IP_SRC 2.0.168.192, IP_DST 1.1.168.192
+Am adaugat in ARP table intrarea, acum arata asa:
+2.1.168.192 - de:ad:be:ef:0:1:
+2.0.168.192 - de:ad:be:ef:0:0:
+Am scos din coada pachetul de tip 8, cu id 31685. El astepta ca next hop IP-ul 2.0.168.192
+Acum sursa si destinatia mac a pachetului sunt:de:fe:c8:ed:0:1:
+de:ad:be:ef:0:0:
+Acum trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 6603
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 3025
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 5329
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 56017
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet ARP request cu IP_SRC 2.1.168.192, IP_DST 1.1.168.192
+Trimit ARP de tip 2 (req=1, rep=2)
+Acest ARP va fi trimis cu IP_SRC 1.1.168.192, IP_DST 2.1.168.192, MAC_SRC de:fe:c8:ed:0:1:
+si MAC_DSTde:ad:be:ef:0:1:
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 17112
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+suma e gresita!
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Nu am gasit MAC in arptable pt IP 192.0.1.2
+Am bagat in coada pachetul curent cu id 256
+Trimit ARP de tip 1 (req=1, rep=2)
+Acest ARP va fi trimis cu IP_SRC 1.0.168.192, IP_DST 2.1.0.192, MAC_SRC de:fe:c8:ed:0:0:
+si MAC_DSTff:ff:ff:ff:ff:ff:
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet ARP reply cu IP_SRC 2.1.0.192, IP_DST 1.0.168.192
+Am adaugat in ARP table intrarea, acum arata asa:
+2.1.168.192 - de:ad:be:ef:0:1:
+2.0.168.192 - de:ad:be:ef:0:0:
+2.1.0.192 - ca:fe:ba:be:1:0:
+Am scos din coada pachetul de tip 8, cu id 256. El astepta ca next hop IP-ul 2.1.0.192
+Acum sursa si destinatia mac a pachetului sunt:de:fe:c8:ed:0:0:
+ca:fe:ba:be:1:0:
+Acum trimit pachetul pe interfata 0
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet ARP request cu IP_SRC 1.3.168.192, IP_DST 1.1.0.192
+Trimit ARP de tip 2 (req=1, rep=2)
+Acest ARP va fi trimis cu IP_SRC 1.1.0.192, IP_DST 1.3.168.192, MAC_SRC ca:fe:ba:be:0:1:
+si MAC_DSTde:fe:c8:ed:1:3:
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet IP cu id 6981
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet ARP request cu IP_SRC 2.0.168.192, IP_DST 1.0.168.192
+Trimit ARP de tip 2 (req=1, rep=2)
+Acest ARP va fi trimis cu IP_SRC 1.0.168.192, IP_DST 2.0.168.192, MAC_SRC de:fe:c8:ed:0:0:
+si MAC_DSTde:ad:be:ef:0:0:
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 18243
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 61924
+Am gasit MAC in arptable pt IP 192.0.1.2:ca:fe:ba:be:1:0:
+Trimit pachetul pe interfata 0
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 57626
+Am gasit MAC in arptable pt IP 192.0.1.2:ca:fe:ba:be:1:0:
+Trimit pachetul pe interfata 0
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet ARP request cu IP_SRC 2.1.168.192, IP_DST 1.1.168.192
+Trimit ARP de tip 2 (req=1, rep=2)
+Acest ARP va fi trimis cu IP_SRC 1.1.168.192, IP_DST 2.1.168.192, MAC_SRC de:fe:c8:ed:0:1:
+si MAC_DSTde:ad:be:ef:0:1:
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 62465
+Am gasit MAC in arptable pt IP 192.0.1.2:ca:fe:ba:be:1:0:
+Trimit pachetul pe interfata 0
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+ttl expirat
+Trimit ICMP
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+destinatia e chiar routerul
+Trimit ICMP
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+nu are destinatar
+Trimit ICMP
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 4382
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 6942
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 7198
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 7710
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 10526
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 12574
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 14110
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 15902
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 17694
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.168.1.2:de:ad:be:ef:0:1:
+Trimit pachetul pe interfata 2
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet IP cu id 18718
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 2
+IP interfata = 192.168.1.1, MAC interfata = de:fe:c8:ed:0:1:
+E pachet ARP request cu IP_SRC 2.1.168.192, IP_DST 1.1.168.192
+Trimit ARP de tip 2 (req=1, rep=2)
+Acest ARP va fi trimis cu IP_SRC 1.1.168.192, IP_DST 2.1.168.192, MAC_SRC de:fe:c8:ed:0:1:
+si MAC_DSTde:ad:be:ef:0:1:
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.0.1.2:ca:fe:ba:be:1:0:
+Trimit pachetul pe interfata 0
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet IP cu id 11077
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.0.1.2:ca:fe:ba:be:1:0:
+Trimit pachetul pe interfata 0
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet IP cu id 12357
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.0.1.2:ca:fe:ba:be:1:0:
+Trimit pachetul pe interfata 0
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet IP cu id 12613
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.0.1.2:ca:fe:ba:be:1:0:
+Trimit pachetul pe interfata 0
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet IP cu id 13637
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.0.1.2:ca:fe:ba:be:1:0:
+Trimit pachetul pe interfata 0
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet IP cu id 15685
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.0.1.2:ca:fe:ba:be:1:0:
+Trimit pachetul pe interfata 0
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet IP cu id 18245
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.0.1.2:ca:fe:ba:be:1:0:
+Trimit pachetul pe interfata 0
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet IP cu id 18757
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.0.1.2:ca:fe:ba:be:1:0:
+Trimit pachetul pe interfata 0
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet IP cu id 20549
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.0.1.2:ca:fe:ba:be:1:0:
+Trimit pachetul pe interfata 0
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet IP cu id 22341
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
+
+----------------------------
+Pachet primit pe interfata 1
+IP interfata = 192.168.0.1, MAC interfata = de:fe:c8:ed:0:0:
+E pachet IP cu id 256
+Am gasit MAC in arptable pt IP 192.0.1.2:ca:fe:ba:be:1:0:
+Trimit pachetul pe interfata 0
+
+----------------------------
+Pachet primit pe interfata 0
+IP interfata = 192.0.1.1, MAC interfata = ca:fe:ba:be:0:1:
+E pachet IP cu id 23365
+Am gasit MAC in arptable pt IP 192.168.0.2:de:ad:be:ef:0:0:
+Trimit pachetul pe interfata 1
