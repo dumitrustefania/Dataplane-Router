@@ -9,9 +9,6 @@
 #define ARP 0x0806
 #define ARP_REQ 1
 #define ARP_REP 2
-#define ICMP 1
-#define MAC_SIZE 6
-#define IP_SIZE 4
 
 char *get_dotted_ip_addr(uint32_t ip_addr)
 {
@@ -35,7 +32,6 @@ uint32_t get_int_ip_addr(char *ip_addr)
 	uint32_t int_ip_addr = (bytes[0] << 24) + (bytes[1] << 16) + (bytes[2] << 8) + bytes[3];
 	return int_ip_addr;
 }
-
 struct trie *create_rtable_trie(char *rtable_path)
 {
 	// populate routing table
@@ -62,7 +58,7 @@ void send_icmp_message(struct ether_header *eth_hdr, struct iphdr *ip_hdr, int t
 	uint32_t aux = ip_hdr->saddr;
 	ip_hdr->saddr = ip_hdr->daddr;
 	ip_hdr->daddr = aux;
-	ip_hdr->protocol = ICMP;
+	ip_hdr->protocol = 1;
 	ip_hdr->tot_len = htons(sizeof(struct iphdr) + sizeof(struct icmphdr));
 	ip_hdr->check = 0;
 	ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, sizeof(struct iphdr)));
@@ -84,8 +80,11 @@ void send_icmp_message(struct ether_header *eth_hdr, struct iphdr *ip_hdr, int t
 void send_arp(uint8_t *mac_src, uint8_t *mac_dst, uint32_t ip_src, uint32_t ip_dst, int interface, int type)
 {
 	struct ether_header *eth_hdr = malloc(sizeof(struct ether_header));
-	memcpy(eth_hdr->ether_shost, mac_src, MAC_SIZE);
-	memcpy(eth_hdr->ether_dhost, mac_dst, MAC_SIZE);
+	for (int i = 0; i < 6; i++)
+	{
+		eth_hdr->ether_shost[i] = mac_src[i];
+		eth_hdr->ether_dhost[i] = mac_dst[i];
+	}
 	eth_hdr->ether_type = htons(ARP);
 
 	struct arp_header *arp_hdr = malloc(sizeof(struct arp_header));
@@ -94,9 +93,12 @@ void send_arp(uint8_t *mac_src, uint8_t *mac_dst, uint32_t ip_src, uint32_t ip_d
 	arp_hdr->hlen = 6;
 	arp_hdr->plen = 4;
 	arp_hdr->op = htons(type);
-	memcpy(arp_hdr->sha, mac_src, MAC_SIZE);
-	memcpy(arp_hdr->tha, mac_dst, MAC_SIZE);
-	arp_hdr->spa = ip_src;
+	for (int i = 0; i < 6; i++)
+	{
+		arp_hdr->sha[i] = mac_src[i];
+		arp_hdr->tha[i] = mac_dst[i];
+	}
+	arp_hdr->spa = htonl(ip_src);
 	arp_hdr->tpa = ip_dst;
 
 	char package[MAX_PACKET_LEN];
@@ -111,12 +113,6 @@ struct queue_entry
 	int buf_len;
 	struct route_table_entry *rtable_entry;
 };
-void print_mac(uint8_t *mac)
-{
-	for (int i = 0; i < 6; i++)
-		printf("%x:", mac[i]);
-	printf("\n");
-}
 
 int main(int argc, char *argv[])
 {
@@ -147,15 +143,19 @@ int main(int argc, char *argv[])
 		// ip ul de pe interfara routerului unde s a primit pachetul
 		char *interface_ip = get_interface_ip(interface);
 		// macul de pe interfata routerului unde s a primit pachetul
-		uint8_t *interface_mac = malloc(MAC_SIZE);
+		uint8_t *interface_mac = malloc(6);
 		get_interface_mac(interface, interface_mac);
 
 		if (ntohs(eth_hdr->ether_type) == IPv4)
 		{
 			struct iphdr *ip_hdr = (struct iphdr *)(buf + sizeof(struct ether_header));
 
-			// verific daca destinatia cautata e routerul
-			if (ntohl(ip_hdr->daddr) == get_int_ip_addr(interface_ip))
+			// transformam ip dest din nr pe 32 de biti in format dotted
+			char *dotted_ip_addr_dest = get_dotted_ip_addr(ntohl(ip_hdr->daddr));
+
+			// verific daca destinatia cautat e routerul
+			// todo icmp
+			if (!strcmp(dotted_ip_addr_dest, interface_ip))
 			{
 				printf("destinatia e chiar routerul\n");
 				send_icmp_message(eth_hdr, ip_hdr, 0, 0, interface);
@@ -182,6 +182,12 @@ int main(int argc, char *argv[])
 
 			// find entry corresponding to next hop
 			struct route_table_entry *rtable_entry = trie_find(t, ntohl(ip_hdr->daddr));
+			// printf("id=%s prefix=%s mask=%s hop=%s interf=%d\n",
+			// 	   get_dotted_ip_addr(ntohl(ip_hdr->daddr)),
+			// 	   get_dotted_ip_addr(ntohl(entry->prefix)),
+			// 	   get_dotted_ip_addr(ntohl(entry->mask)),
+			// 	   get_dotted_ip_addr(ntohl(entry->next_hop)),
+			// 	   entry->interface);
 
 			if (rtable_entry == NULL)
 			{
@@ -195,17 +201,27 @@ int main(int argc, char *argv[])
 			ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, sizeof(struct iphdr)));
 
 			// rescrie mac
-			memcpy(eth_hdr->ether_shost, interface_mac, MAC_SIZE);
-			print_mac(eth_hdr->ether_shost);
+
+			for (int i = 0; i < 6; i++)
+			{
+				eth_hdr->ether_shost[i] = interface_mac[i];
+				printf("%x ", interface_mac[i]);
+			}
+			printf("\n");
 
 			int found_mac = 0;
+
 			for (int i = 0; i < arptable_size; i++)
 			{
-				if (arptable[i].ip == rtable_entry->next_hop)
+				if ((arptable[i]).ip == rtable_entry->next_hop)
 				{
 					found_mac = 1;
-					memcpy(eth_hdr->ether_dhost, arptable[i].mac, MAC_SIZE);
-					print_mac(eth_hdr->ether_dhost);
+					for (int j = 0; j < 6; j++)
+					{
+						printf("%x ", (arptable[i]).mac[j]);
+						eth_hdr->ether_dhost[j] = (arptable[i]).mac[j];
+					}
+					printf("\n");
 					break;
 				}
 			}
@@ -217,23 +233,22 @@ int main(int argc, char *argv[])
 				memcpy(q_entry->buf, buf, len);
 				q_entry->rtable_entry = rtable_entry;
 				q_entry->buf_len = len;
-				queue_enq(q, (void *)q_entry);
+				queue_enq(q, q_entry);
 
 				printf("am bagat in coada pachetul cu eth_hdr->src = ");
-				print_mac(eth_hdr->ether_shost);
+				for (int i = 0; i < 6; i++)
+					printf("%x ", eth_hdr->ether_shost[i]);
+				printf("\n");
 
-				uint8_t *broadcast = malloc(MAC_SIZE);
-				for (int i = 0; i < MAC_SIZE; i++)
+				uint8_t *broadcast = malloc(6);
+				for(int i = 0; i < 6; i ++)
 					broadcast[i] = 0xff;
 
-				send_arp(interface_mac, broadcast, htonl(get_int_ip_addr(interface_ip)),
-						 rtable_entry->next_hop, rtable_entry->interface, ARP_REQ);
+				send_arp(interface_mac, broadcast, htonl(get_int_ip_addr(interface_ip)), rtable_entry->next_hop, rtable_entry->interface, ARP_REQ);
 				continue;
 			}
-			else
-			{
-				send_to_link(rtable_entry->interface, buf, len);
-			}
+
+			send_to_link(rtable_entry->interface, buf, len);
 		}
 
 		else if (ntohs(eth_hdr->ether_type) == ARP)
@@ -242,18 +257,48 @@ int main(int argc, char *argv[])
 
 			if (ntohs(arp_hdr->op) == ARP_REQ)
 			{
-				printf("e arp request: arp src=%s dest=%s my ip=%s\n", get_dotted_ip_addr(arp_hdr->spa), get_dotted_ip_addr(arp_hdr->tpa), interface_ip);
-				// eu sunt destinatarul arp req
-				if (ntohl(arp_hdr->tpa) == get_int_ip_addr(interface_ip))
-					send_arp(interface_mac, eth_hdr->ether_shost, arp_hdr->tpa, arp_hdr->spa, interface, ARP_REP);
+				printf("e arp request\n");
+
+				char *dotted_ip_addr_dest = get_dotted_ip_addr(ntohl(arp_hdr->tpa));
+				printf("arp src=%s dest=%s my ip=%s\n", get_dotted_ip_addr(arp_hdr->spa), dotted_ip_addr_dest, interface_ip);
+				if (!strcmp(dotted_ip_addr_dest, interface_ip))
+				{
+					printf("eu sunt destinatia! acum schimb destinatia cu ");
+
+					for (int i = 0; i < 6; i++)
+					{
+						eth_hdr->ether_dhost[i] = eth_hdr->ether_shost[i];
+						arp_hdr->tha[i] = eth_hdr->ether_shost[i];
+						printf("%x:", eth_hdr->ether_shost[i]);
+					}
+					printf("si sursa cu: ");
+					for (int i = 0; i < 6; i++)
+					{
+						eth_hdr->ether_shost[i] = interface_mac[i];
+						arp_hdr->sha[i] = interface_mac[i];
+						printf("%x:", interface_mac[i]);
+					}
+					printf("\n");
+
+					arp_hdr->op = htons(ARP_REP);
+
+					uint32_t aux = arp_hdr->tpa;
+					arp_hdr->tpa = arp_hdr->spa;
+					arp_hdr->spa = aux;
+
+					printf("trimit arp reply-ul cu sursa %s si target %s\n", get_dotted_ip_addr(arp_hdr->spa), get_dotted_ip_addr(arp_hdr->tpa));
+					send_to_link(interface, buf, len);
+				}
 			}
 			else if (ntohs(arp_hdr->op) == ARP_REP)
 			{
-				printf("e arp reply: vine de la %s si este pentru %s, e coada goala? %d\n",
-					   get_dotted_ip_addr(arp_hdr->spa), get_dotted_ip_addr(arp_hdr->tpa), queue_empty(q));
+				printf("e arp reply\n");
+				printf("vine de la %s si este pentru %s, e coada goala? %d\n", 
+				get_dotted_ip_addr(arp_hdr->spa), get_dotted_ip_addr(arp_hdr->tpa), queue_empty(q));
 
 				arptable[arptable_size].ip = arp_hdr->spa;
-				memcpy(arptable[arptable_size].mac, arp_hdr->sha, MAC_SIZE);
+				for (int i = 0; i < 6; i++)
+					arptable[arptable_size].mac[i] = arp_hdr->sha[i];
 				arptable_size++;
 
 				queue aux_q = queue_create();
@@ -264,21 +309,26 @@ int main(int argc, char *argv[])
 					if (q_entry->rtable_entry->next_hop == arp_hdr->spa)
 					{
 						struct ether_header *queue_eth_hdr = (struct ether_header *)q_entry->buf;
-						if (ntohs(queue_eth_hdr->ether_type) == IPv4)
+						printf("in coada era pastrat eth_hdr de tip %x cu sursa schimbata:", queue_eth_hdr->ether_type);
+						for (int i = 0; i < 6; i++)
 						{
-							printf("in coada era pastrat eth_hdr de tip %x cu sursa schimbata:", queue_eth_hdr->ether_type);
-							print_mac(queue_eth_hdr->ether_shost);
-							printf("iar acum ii schimb si destinatia la");
-							memcpy(queue_eth_hdr->ether_dhost, arp_hdr->sha, MAC_SIZE);
-							print_mac(queue_eth_hdr->ether_dhost);
-
-							printf("resendmsg\n");
-							send_to_link(q_entry->rtable_entry->interface, q_entry->buf, q_entry->buf_len);
+							printf("%x ", queue_eth_hdr->ether_shost[i]);
 						}
+						printf("iar acum ii schimb si destinatia la");
+						for (int i = 0; i < 6; i++)
+						{
+							queue_eth_hdr->ether_dhost[i] = arp_hdr->sha[i];
+							printf("%x ", arp_hdr->sha[i]);
+						}
+						printf("\n");
+
+						printf("resendmsg\n");
+						send_to_link(q_entry->rtable_entry->interface, q_entry->buf, q_entry->buf_len);
 					}
 					else
 						queue_enq(aux_q, q_entry);
 				}
+
 				q = aux_q;
 			}
 		}
