@@ -40,14 +40,17 @@ struct trie *create_rtable_trie(char *rtable_path)
 	return t;
 }
 
-
-void send_icmp_message(struct ether_header *eth_hdr, struct iphdr *ip_hdr, int type, int code, int interface)
-{	
+void send_icmp_message(struct ether_header *eth_hdr, struct iphdr *ip_hdr, int type, int code, int interface, int len)
+{
 	// Swap ethernet physical addresses
 	uint8_t *aux = malloc(MAC_SIZE);
 	memcpy(aux, eth_hdr->ether_dhost, MAC_SIZE);
 	memcpy(eth_hdr->ether_dhost, eth_hdr->ether_shost, MAC_SIZE);
 	memcpy(eth_hdr->ether_shost, aux, MAC_SIZE);
+
+	// Save old IP header and its next 64 bits of payload
+	struct iphdr *old_ip_hdr_and_bits = malloc(sizeof(struct iphdr) + 64);
+	memcpy(old_ip_hdr_and_bits, ip_hdr, sizeof(struct iphdr) + 64);
 
 	// Swap ip addresses
 	uint32_t aux2 = ip_hdr->saddr;
@@ -55,29 +58,58 @@ void send_icmp_message(struct ether_header *eth_hdr, struct iphdr *ip_hdr, int t
 	ip_hdr->daddr = aux2;
 	// Set ip protocol to ICMP
 	ip_hdr->protocol = ICMP;
-	// Recumpute len and checksum
-	ip_hdr->tot_len = htons(sizeof(struct iphdr) + sizeof(struct icmphdr));
-	ip_hdr->check = 0;
-	ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, sizeof(struct iphdr)));
 
-	// Create icmp header structure with given type and code
-	struct icmphdr *icmp_hdr = malloc(sizeof(struct icmphdr));
-	icmp_hdr->type = type;
-	icmp_hdr->code = code;
-	icmp_hdr->checksum = 0;
-	icmp_hdr->checksum = htons(checksum((uint16_t *)icmp_hdr, sizeof(struct icmphdr)));
-
-	// Create the new packet and send it
+	// Create the new packet
 	char package[MAX_PACKET_LEN];
 	memcpy(package, eth_hdr, sizeof(struct ether_header));
-	memcpy(package + sizeof(struct ether_header), ip_hdr, sizeof(struct iphdr));
-	memcpy(package + sizeof(struct ether_header) + sizeof(struct iphdr), icmp_hdr, sizeof(struct icmphdr));
 
-	send_to_link(interface, package, sizeof(struct ether_header) + sizeof(struct iphdr) + sizeof(struct icmphdr));
+	// If ICMP type is time exceeded or dest unreachable
+	if (type)
+	{
+		// Recompute IP len and checksum
+		ip_hdr->tot_len = htons(2 * sizeof(struct iphdr) + sizeof(struct icmphdr) + 64);
+		ip_hdr->check = 0;
+		ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, sizeof(struct iphdr)));
+		memcpy(package + sizeof(struct ether_header), ip_hdr, sizeof(struct iphdr));
+
+		// Create ICMP header structure with given type and code
+		struct icmphdr *icmp_hdr = malloc(sizeof(struct icmphdr));
+		icmp_hdr->type = type;
+		icmp_hdr->code = code;
+		icmp_hdr->checksum = 0;
+		icmp_hdr->checksum = htons(checksum((uint16_t *)icmp_hdr, sizeof(struct icmphdr)));
+
+		// Copy the new ICMP header
+		memcpy(package + sizeof(struct ether_header) + sizeof(struct iphdr), icmp_hdr, sizeof(struct icmphdr));
+		len = sizeof(struct ether_header) + sizeof(struct iphdr) + sizeof(struct icmphdr);
+
+		// Copy the old ip header and the next 64 bits of payload
+		memcpy(package + len, old_ip_hdr_and_bits, sizeof(struct iphdr) + 64);
+		len += sizeof(struct iphdr) + 64;
+	}
+	else
+	{ // Recompute len and checksum
+		ip_hdr->tot_len = htons(len - sizeof(struct ether_header));
+		ip_hdr->check = 0;
+		ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, sizeof(struct iphdr)));
+		memcpy(package + sizeof(struct ether_header), ip_hdr, sizeof(struct iphdr));
+
+		// Modify icmp header structure with given type and code
+		struct icmphdr *icmp_hdr = (struct icmphdr *)(ip_hdr + sizeof(struct iphdr));
+		icmp_hdr->type = type;
+		icmp_hdr->code = code;
+		icmp_hdr->checksum = 0;
+		icmp_hdr->checksum = htons(checksum((uint16_t *)icmp_hdr, sizeof(struct icmphdr)));
+
+		// Copy the ICMP header and whatever was after it
+		memcpy(package + sizeof(struct ether_header) + sizeof(struct iphdr), icmp_hdr, len - sizeof(struct ether_header) - sizeof(struct iphdr));
+	}
+
+	send_to_link(interface, package, len);
 }
 
 void send_arp(uint8_t *mac_src, uint8_t *mac_dst, uint32_t ip_src, uint32_t ip_dst, int interface, int type)
-{	// Create eth header structure and populate it
+{ // Create eth header structure and populate it
 	struct ether_header *eth_hdr = malloc(sizeof(struct ether_header));
 	memcpy(eth_hdr->ether_shost, mac_src, MAC_SIZE);
 	memcpy(eth_hdr->ether_dhost, mac_dst, MAC_SIZE);
@@ -144,13 +176,13 @@ int main(int argc, char *argv[])
 
 		// If received packet is IPv4 packet
 		if (ntohs(eth_hdr->ether_type) == IPv4)
-		{	// Exctract the IP header from the buffer
+		{ // Exctract the IP header from the buffer
 			struct iphdr *ip_hdr = (struct iphdr *)(buf + sizeof(struct ether_header));
 
 			// Check if packet destination is this router
 			if (ntohl(ip_hdr->daddr) == interface_ip)
-			{	// Send back ICMP message type 0 code 0 - ping reply
-				send_icmp_message(eth_hdr, ip_hdr, 0, 0, interface);
+			{ // Send back ICMP message type 0 code 0 - ping reply
+				send_icmp_message(eth_hdr, ip_hdr, 0, 0, interface, len);
 				continue;
 			}
 
@@ -159,23 +191,22 @@ int main(int argc, char *argv[])
 			ip_hdr->check = 0;
 			if (check != checksum((uint16_t *)ip_hdr, sizeof(struct iphdr)))
 				continue;
-			
 
 			// Check if ttl expired (ttl < 2)
 			if (ip_hdr->ttl == 0 || ip_hdr->ttl == 1)
-			{	// Send back ICMP message type 11 code 0 - time exceeded
-				send_icmp_message(eth_hdr, ip_hdr, 11, 0, interface);
+			{ // Send back ICMP message type 11 code 0 - time exceeded
+				send_icmp_message(eth_hdr, ip_hdr, 11, 0, interface, len);
 				continue;
 			}
 
 			// Find an entry in the routing table to determine the next hop
 			struct route_table_entry *rtable_entry = trie_find(t, ntohl(ip_hdr->daddr));
-			
+
 			// Check if the entry was found
 			if (rtable_entry == NULL)
 			{
 				// Send back ICMP message type 3 code 0 - destination unreachable
-				send_icmp_message(eth_hdr, ip_hdr, 3, 0, interface);
+				send_icmp_message(eth_hdr, ip_hdr, 3, 0, interface, len);
 				continue;
 			}
 
@@ -194,7 +225,7 @@ int main(int argc, char *argv[])
 			int found_mac = 0;
 			for (int i = 0; i < arptable_size; i++)
 				if (arptable[i].ip == rtable_entry->next_hop)
-				{	
+				{
 					// If the entry is present, set destination MAC to the entry found
 					found_mac = 1;
 					memcpy(eth_hdr->ether_dhost, arptable[i].mac, MAC_SIZE);
@@ -203,7 +234,7 @@ int main(int argc, char *argv[])
 
 			// If the ARP table doesn't contain the next hop, send ARP request
 			if (!found_mac)
-			{	// Create a new queue entry structure and populate it with data
+			{ // Create a new queue entry structure and populate it with data
 				// about the current packet (buffer, its length, routing table entry found)
 				struct queue_entry *q_entry = malloc(sizeof(struct queue_entry));
 				q_entry->buf = malloc(len);
@@ -231,7 +262,7 @@ int main(int argc, char *argv[])
 
 		// If received packet is ARP packet
 		else if (ntohs(eth_hdr->ether_type) == ARP)
-		{	// Extract the ARP header from the buffer
+		{ // Extract the ARP header from the buffer
 			struct arp_header *arp_hdr = (struct arp_header *)(buf + sizeof(struct ether_header));
 
 			// Determine the MAC of the current interface
@@ -240,7 +271,7 @@ int main(int argc, char *argv[])
 
 			// If the router received an ARP REQUEST, send an ARP REPLY
 			if (ntohs(arp_hdr->op) == ARP_REQ)
-			{ 	// Check if the router is the final destination
+			{ // Check if the router is the final destination
 				if (ntohl(arp_hdr->tpa) == interface_ip)
 					send_arp(interface_mac, eth_hdr->ether_shost, arp_hdr->tpa, arp_hdr->spa, interface, ARP_REP);
 				else
@@ -249,21 +280,21 @@ int main(int argc, char *argv[])
 			// If the router received an ARP REPLY, store its response
 			// and send certain IP packets stored
 			else if (ntohs(arp_hdr->op) == ARP_REP)
-			{	// Store the ARP reply in the ARP table
+			{ // Store the ARP reply in the ARP table
 				arptable[arptable_size].ip = arp_hdr->spa;
 				memcpy(arptable[arptable_size].mac, arp_hdr->sha, MAC_SIZE);
 				arptable_size++;
 
 				queue aux_q = queue_create();
 				while (!queue_empty(q))
-				{	// Extract the buffer from the queue
+				{ // Extract the buffer from the queue
 					struct queue_entry *q_entry = (struct queue_entry *)queue_deq(q);
 					// Extract the ethernet header from the queue
 					struct ether_header *q_eth_hdr = (struct ether_header *)(q_entry->buf);
 
 					// If the current packet was waiting for this reply, send it now
 					if (q_entry->rtable_entry->next_hop == arp_hdr->spa)
-					{	// Set the destination MAC to the one received
+					{ // Set the destination MAC to the one received
 						memcpy(q_eth_hdr->ether_dhost, arp_hdr->sha, MAC_SIZE);
 						// Send the packet
 						send_to_link(q_entry->rtable_entry->interface, q_entry->buf, q_entry->buf_len);
