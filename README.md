@@ -1,69 +1,54 @@
 # DATAPLANE ROUTER
 
-322CA - Bianca Ștefania Dumitru
-Protocoale de comunicatii
-
 Martie 2023
 ----------------------------------------------------------------------------------------------------
 ## Introducere
 
 * Dataplane router
-  *  programul implementeaza un dataplane router in Linux
-  *  scopul principal consta in dirijarea pachetelor IP intre hosti
-  *  routerul implementeaza si trimiterea de pachete ICMP, atunci cand e cazul
-  *  determinarea adreselor MAC vecine se realizeaza cu ajutorul protocolului ARP
+  *  The program implements a dataplane router in Linux.
+  * The main purpose is to route IP packets between hosts.
+  * The router also implements sending ICMP packets when necessary.
+  * Determination of neighbor MAC addresses is done using the ARP protocol.
 
 ## Cum functioneaza?
 
 ### Initializare
 
-La initializare, routerul aloca memorie pentru tabela ARP pe care urmeaza sa o populeze
-si creeaza trie-ul ce va asigura cautarea eficienta a longest prefix match cu un IP
-dat in tabela de rutare.
+During initialization, the router allocates memory for the ARP table to be populated and creates the trie that ensures efficient longest prefix match lookup with a given IP in the routing table.
 
 ### Receptionare
 
-Un pachet este receptionat pe una din interfetele routerului. Se extrage headerul
-de ethernet al pachetului primit si se determina IP-ul interfetei respective si se
- verifica daca pachetul foloseste protocolul IPv4 sau ARP.
+A packet is received on one of the router's interfaces. The Ethernet header of the received packet is extracted, and the respective interface's IP is determined. It is checked whether the packet uses the IPv4 protocol or ARP.
 
 ### Protocolul IPv4
 
-Routerul extrage headerul IP al pachetului si face anumite verificari:
-* Daca routerul este destinatarul pachetului, se trimite inapoi un pachet ICMP de tip echo reply
-* Se verifica checksum-ul. In cazul in care pachetul a fost corupt, routerul il arunca.
-* Se verifica daca TTL > 2. In caz contrar, e trimis inapoi un pachet ICMP de tipul time exceeded.
+The router extracts the IP header of the packet and performs certain checks:
+* If the router is the intended recipient of the packet, an ICMP echo reply packet is sent back.
+The checksum is verified. If the packet is corrupted, the router discards it.
+* It is checked whether TTL > 2. If not, an ICMP time exceeded packet is sent back.
+After these checks, the router determines the next hop to the destination. This is achieved by querying the previously created trie, which returns the correct entry from the routing table. If no matching entry for the given destination exists, the router sends an ICMP destination unreachable packet.
 
-Dupa aceste verificari, routerul determina urmatorul hop pana la destinatar. Acest
-lucru este realizat prin interogarea trie-ului anterior creat, care returneaza intrarea
-corecta din tabela de rutare. Daca nu exista nicio intrare care se potriveste destinatiei
-date, atunci routerul intoarce un pchet ICMP de tip destination unreachable.
+The TTL is then decremented, and the checksum is recalculated. In the Ethernet header, the source MAC is set to the interface's MAC where the packet is to be sent.
 
-Este decrementat apoi TTL-ul si recalculat checksum. In headerul ethernet, sursa MAC este
-setata la MAC-ul interfetei pe care urmeaza sa fie trimis pachetul.
+The router looks up the MAC of the next hop in the local ARP table. If it is already there, the packet is successfully forwarded. Otherwise, the packet is added to a queue to be revisited later, and the router performs an ARP request to determine the MAC address of the next hop.
 
-Este cautat in tabela locala ARP MAC-ul next hop-ului. Daca acesta se afla deja acolo, pachetul
-este trimis cu succes mai departe. Altfel, pachetul este adaugat intr-o coada pentru a se putea
-reveni la el mai tarziu si routerul realizeaza un ARP request pentru determinarea adresei MAC a next hop-ului.
+### ARP Protocol
 
-### Protocolul ARP
+When it is determined that the received packet follows the ARP protocol, the ARP header is extracted from the buffer, and it is checked whether the packet is an ARP request or ARP reply.
 
-Atunci cand se determina ca pachetul primit urmeaza protocolul ARP, se extrage headerul ARP din
-buffer si se verifica daca pachetul este de tip ARP request sau ARP reply.
+In the case of an ARP request, the router checks if it is the intended recipient and sends a reply, notifying the sender of its MAC address.
 
-In cazul ARP request, routerul verifica ca el este destinatarul, caz in care trimite un reply,
-instiintand sender-ul de adresa lui MAC.
-
-In cazul ARP reply, routerul primeste raspuns la requestul facut anterior, in cadrul procesarii
-pachetelor IPv4. Se retine in tabela locala ARP raspunsul primit si se parcurge coada, cautandu-se
-toate pachetele IPv4 care asteptau acest raspuns. Pachetele respective sunt acum trimise mai departe.
+In the case of an ARP reply, the router receives a response to a previously made request within the processing of IPv4 packets. The received ARP reply is stored in the local ARP table, and the queue is traversed, searching for all IPv4 packets that were waiting for this reply. Those packets are now forwarded.
 
 ### ICMP
 
-Pachetele de tip ICMP sunt compuse din headerele de ethernet, IP si ICMP. 
+ICMP packets consist of Ethernet, IP, and ICMP headers.
 
-## Resurse
-* Enuntul temei - https://pcom.pages.upb.ro/tema1/
-* Networking tutorial - https://youtube.com/playlist?list=PLowKtXNTBypH19whXTVoG3oKSuOcw_XeW
-* LPM cu trie - https://www.lewuathe.com/longest-prefix-match-with-trie-tree.html
+### Resources
+
+Networking tutorial - https://youtube.com/playlist?list=PLowKtXNTBypH19whXTVoG3oKSuOcw_XeW
+
+
+
+
 
