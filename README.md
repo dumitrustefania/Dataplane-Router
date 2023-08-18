@@ -1,8 +1,8 @@
 # DATAPLANE ROUTER
 
-Martie 2023
+March 2023
 ----------------------------------------------------------------------------------------------------
-## Introducere
+## Introduction
 
 * Dataplane router
   *  The program implements a dataplane router in Linux.
@@ -10,17 +10,17 @@ Martie 2023
   * The router also implements sending ICMP packets when necessary.
   * Determination of neighbor MAC addresses is done using the ARP protocol.
 
-## Cum functioneaza?
+## How it works?
 
-### Initializare
+### Initialization
 
 During initialization, the router allocates memory for the ARP table to be populated and creates the trie that ensures efficient longest prefix match lookup with a given IP in the routing table.
 
-### Receptionare
+### Reception
 
 A packet is received on one of the router's interfaces. The Ethernet header of the received packet is extracted, and the respective interface's IP is determined. It is checked whether the packet uses the IPv4 protocol or ARP.
 
-### Protocolul IPv4
+### IPv4 Protocol
 
 The router extracts the IP header of the packet and performs certain checks:
 * If the router is the intended recipient of the packet, an ICMP echo reply packet is sent back.
@@ -40,7 +40,7 @@ In the case of an ARP request, the router checks if it is the intended recipient
 
 In the case of an ARP reply, the router receives a response to a previously made request within the processing of IPv4 packets. The received ARP reply is stored in the local ARP table, and the queue is traversed, searching for all IPv4 packets that were waiting for this reply. Those packets are now forwarded.
 
-### ICMP
+### ICMP Protocol
 
 ICMP packets consist of Ethernet, IP, and ICMP headers.
 
